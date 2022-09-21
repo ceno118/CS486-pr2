@@ -1,0 +1,18 @@
+class: "BetterEvalAgentTest"
+
+agentName: "ExpectimaxAgent"
+agentArgs: "evalFn=better"
+layoutName: "smallClassic"
+maxTime: "120"
+numGames: "10"
+
+nonTimeoutMinimum: "1"
+nonTimeoutThresholds: "1"
+
+scoreThresholds: "1 500 1000"
+
+winsMinimum: "1"
+winsThresholds: "5 10"
+
+randomSeed: "0"
+ghosts: "[RandomGhost(1)]"
