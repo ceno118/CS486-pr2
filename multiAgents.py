@@ -151,22 +151,22 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
-    def evalFunction(self, state, d = 0):
-      if self.depth == d or state.isWin() or state.isLose():
-        return self.evaluationFunction(state)
-      else:
-        tmpScores = []
-        legalMoves = state.getLegalActions()
-        successors = []
-        for move in legalMoves:
-          successors.append(state.generateSuccessor(self.index, move))
-        for state in successors:
-          tmpScores.append(self.evalFunction(state, d + 1))
-        if self.index == 0:
-          return max(tmpScores)
-        else:
-          return min(tmpScores)
-    def getAction(self, gameState, curDepth = 0):
+    # def evalFunction(self, state, d = 0):
+    #   if self.depth == d or state.isWin() or state.isLose():
+    #     return self.evaluationFunction(state)
+    #   else:
+    #     tmpScores = []
+    #     legalMoves = state.getLegalActions()
+    #     successors = []
+    #     for move in legalMoves:
+    #       successors.append(state.generateSuccessor(self.index, move))
+    #     for state in successors:
+    #       tmpScores.append(self.evalFunction(state, d + 1))
+    #     if self.index == 0:
+    #       return max(tmpScores)
+    #     else:
+    #       return min(tmpScores)
+    def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
           and self.evaluationFunction.
@@ -184,18 +184,63 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        possibleMoves = gameState.getLegalActions(self.index)
-        successors = [gameState.generateSuccessor(self.index, action) for action in possibleMoves]
-        scores = [self.evalFunction(successor, curDepth) for successor in successors]
-        maxScore = max(scores)
-        minScore = min(scores)
-        bestIndices = []
-        if self.index == 0:
-          bestIndices = [i for i in range(len(scores)) if scores[i] == maxScore]
-        else:
-          bestIndices = [i for i in range(len(scores)) if scores[i] == minScore]
-        chosenIndex = random.choice(bestIndices)
-        return possibleMoves[chosenIndex]
+
+        def minimaxHelper(state, depth, index):
+          nextDepth = depth
+          nextIndex = index
+          if state.isWin() or state.isLose() or depth == self.depth:
+            return (self.evaluationFunction(state), None)
+          elif index == state.getNumAgents() - 1:
+            nextIndex = 0
+            nextDepth += 1
+          else:
+            nextIndex += 1
+
+          if index == 0:
+            legalMoves = state.getLegalActions(index)
+            
+            max = -10000
+            bestAction = None
+            for i in range(len(legalMoves)):
+              tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+              if tmp > max:
+                max = tmp
+                bestAction = legalMoves[i]
+            return (max, bestAction)
+
+          else:
+            legalMoves = state.getLegalActions(index)
+            
+            min = 10000
+            bestAction = None
+            for i in range(len(legalMoves)):
+              tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+              if tmp < min:
+                max = tmp
+                bestAction = legalMoves[i]
+            return (min, bestAction)
+        
+        return minimaxHelper(gameState, 0, 0)[1]
+            
+                     
+
+
+
+
+
+
+        # possibleMoves = gameState.getLegalActions(self.index)
+        # successors = [gameState.generateSuccessor(self.index, action) for action in possibleMoves]
+        # scores = [self.evalFunction(successor, curDepth) for successor in successors]
+        # maxScore = max(scores)
+        # minScore = min(scores)
+        # bestIndices = []
+        # if self.index == 0:
+        #   bestIndices = [i for i in range(len(scores)) if scores[i] == maxScore]
+        # else:
+        #   bestIndices = [i for i in range(len(scores)) if scores[i] == minScore]
+        # chosenIndex = random.choice(bestIndices)
+        # return possibleMoves[chosenIndex]
 
         util.raiseNotDefined()
 
