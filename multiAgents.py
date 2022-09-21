@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from telnetlib import theNULL
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -74,7 +75,47 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+
+        newGhostLocs = successorGameState.getGhostPositions()
+
+        ghostDistances = []
+        for pos in newGhostLocs:
+          dist = (abs(newPos[0] - pos[0]) + abs(newPos[1] - pos[1]))
+          ghostDistances.append(dist)
+
+        needToMove = False
+        curPos = currentGameState.getPacmanPosition()
+        if newPos == curPos:
+          needToMove = True
+
+        goingToDie = False
+        for dist in ghostDistances:
+          if dist == 0:
+            goingToDie = True
+
+        newFoodLocs = []
+        for i in range(newFood.width):
+          for j in range(newFood.height):
+            if newFood[i][j] == True:
+              newFoodLocs.append((i,j))
+
+        if len(newFoodLocs) == 0:
+          return 0
+        
+        totalFoodDistance = 0
+        nextToFood = False
+        
+        newFoodCount = successorGameState.getNumFood()
+
+        for pos in newFoodLocs:
+          dist = (abs(newPos[0] - pos[0]) + abs(newPos[1] - pos[1]))
+          totalFoodDistance += dist
+        avgFoodDist = totalFoodDistance / len(newFoodLocs)
+
+        if goingToDie or needToMove:
+          return -1000
+        else:
+          return 1/avgFoodDist - newFoodCount
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -129,6 +170,16 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
+
+        scores = []
+        states = []
+        legalActions = gameState.getLegalActions(0)
+        for action in legalActions:
+          states.append(gameState.generateSuccessor(0, action))
+        
+        
+
+
         util.raiseNotDefined()
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
