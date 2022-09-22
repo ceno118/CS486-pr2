@@ -151,21 +151,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
-    # def evalFunction(self, state, d = 0):
-    #   if self.depth == d or state.isWin() or state.isLose():
-    #     return self.evaluationFunction(state)
-    #   else:
-    #     tmpScores = []
-    #     legalMoves = state.getLegalActions()
-    #     successors = []
-    #     for move in legalMoves:
-    #       successors.append(state.generateSuccessor(self.index, move))
-    #     for state in successors:
-    #       tmpScores.append(self.evalFunction(state, d + 1))
-    #     if self.index == 0:
-    #       return max(tmpScores)
-    #     else:
-    #       return min(tmpScores)
+
     def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
@@ -188,7 +174,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
         def minimaxHelper(state, depth, index):
           nextDepth = depth
           nextIndex = index
-          if state.isWin() or state.isLose() or depth == self.depth:
+          legalMoves = state.getLegalActions(index)
+          if state.isWin() or state.isLose() or depth == self.depth or len(legalMoves) == 0:
             return (self.evaluationFunction(state), None)
           elif index == state.getNumAgents() - 1:
             nextIndex = 0
@@ -197,9 +184,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             nextIndex += 1
 
           if index == 0:
-            legalMoves = state.getLegalActions(index)
-            
-            max = -10000
+            max = -float("inf")
             bestAction = None
             for i in range(len(legalMoves)):
               tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
@@ -209,38 +194,17 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return (max, bestAction)
 
           else:
-            legalMoves = state.getLegalActions(index)
             
-            min = 10000
+            min = float("inf")
             bestAction = None
             for i in range(len(legalMoves)):
               tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
               if tmp < min:
-                max = tmp
+                min = tmp
                 bestAction = legalMoves[i]
             return (min, bestAction)
         
         return minimaxHelper(gameState, 0, 0)[1]
-            
-                     
-
-
-
-
-
-
-        # possibleMoves = gameState.getLegalActions(self.index)
-        # successors = [gameState.generateSuccessor(self.index, action) for action in possibleMoves]
-        # scores = [self.evalFunction(successor, curDepth) for successor in successors]
-        # maxScore = max(scores)
-        # minScore = min(scores)
-        # bestIndices = []
-        # if self.index == 0:
-        #   bestIndices = [i for i in range(len(scores)) if scores[i] == maxScore]
-        # else:
-        #   bestIndices = [i for i in range(len(scores)) if scores[i] == minScore]
-        # chosenIndex = random.choice(bestIndices)
-        # return possibleMoves[chosenIndex]
 
         util.raiseNotDefined()
 
@@ -254,6 +218,48 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
+
+        def alphaBetaHelper(state, depth, index, alpha, beta):
+          nextDepth = depth
+          nextIndex = index
+          legalMoves = state.getLegalActions(index)
+          if state.isWin() or state.isLose() or depth == self.depth or len(legalMoves) == 0:
+            return (self.evaluationFunction(state), None)
+          elif index == state.getNumAgents() - 1:
+            nextIndex = 0
+            nextDepth += 1
+          else:
+            nextIndex += 1
+
+          if index == 0:
+            v = -float("inf")
+            bestAction = None
+            for i in range(len(legalMoves)):
+              tmp = alphaBetaHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex, alpha, beta)[0]
+              if tmp > v:
+                v = tmp
+                bestAction = legalMoves[i]
+              if v > beta:
+                return (v, bestAction)
+              alpha = max(alpha, v)
+            return (v, bestAction)
+
+          else:
+            
+            v = float("inf")
+            bestAction = None
+            for i in range(len(legalMoves)):
+              tmp = alphaBetaHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex, alpha, beta)[0]
+              if tmp < v:
+                v = tmp
+                bestAction = legalMoves[i]
+              if v < alpha:
+                return (v, bestAction)
+              beta = min(beta, v)
+            return (v, bestAction)
+
+        return alphaBetaHelper(gameState, 0, 0, -float("inf"), float("inf"))[1]
+
         util.raiseNotDefined()
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
