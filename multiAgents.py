@@ -186,24 +186,24 @@ class MinimaxAgent(MultiAgentSearchAgent):
           if index == 0:
             max = -float("inf")
             bestAction = None
-            for i in range(len(legalMoves)):
-              tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+            for move in legalMoves:
+              tmp = minimaxHelper(state.generateSuccessor(index, move), nextDepth, nextIndex)[0]
               if tmp > max:
                 max = tmp
-                bestAction = legalMoves[i]
+                bestAction = move
             return (max, bestAction)
 
           else:
             
             min = float("inf")
             bestAction = None
-            for i in range(len(legalMoves)):
-              tmp = minimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+            for move in legalMoves:
+              tmp = minimaxHelper(state.generateSuccessor(index, move), nextDepth, nextIndex)[0]
               if tmp < min:
                 min = tmp
                 bestAction = legalMoves[i]
             return (min, bestAction)
-        
+
         return minimaxHelper(gameState, 0, 0)[1]
 
         util.raiseNotDefined()
