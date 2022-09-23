@@ -76,6 +76,9 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
 
+        """Makes sure the action doesn't cause pacman to die, then tries to minimize distance to 
+        food and reduce the number of food pellets on the board."""
+        
         newGhostLocs = successorGameState.getGhostPositions()
 
         ghostDistances = []
@@ -172,17 +175,26 @@ class MinimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
 
         def minimaxHelper(state, depth, index):
+          # sets values for next recursive call
           nextDepth = depth
           nextIndex = index
+          
           legalMoves = state.getLegalActions(index)
+          
+          # finds terminal states and returns their score
           if state.isWin() or state.isLose() or depth == self.depth or len(legalMoves) == 0:
             return (self.evaluationFunction(state), None)
+          
+          # if this is the last agent, prepares to recurse over the next depth level, starting back with pacman
           elif index == state.getNumAgents() - 1:
             nextIndex = 0
             nextDepth += 1
+          
+          # prepares to recurse over the next agent
           else:
             nextIndex += 1
 
+          # finds the move with the maximum score
           if index == 0:
             max = -float("inf")
             bestAction = None
@@ -193,8 +205,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 bestAction = legalMoves[i]
             return (max, bestAction)
 
+          # finds the move with the minimum score
           else:
-            
             min = float("inf")
             bestAction = None
             for i in range(len(legalMoves)):
@@ -220,6 +232,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
 
         def alphaBetaHelper(state, depth, index, alpha, beta):
+          # same as minimax
           nextDepth = depth
           nextIndex = index
           legalMoves = state.getLegalActions(index)
@@ -231,6 +244,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           else:
             nextIndex += 1
 
+          # finds the max, accounting for alpha and beta
           if index == 0:
             v = -float("inf")
             bestAction = None
@@ -244,8 +258,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
               alpha = max(alpha, v)
             return (v, bestAction)
 
+          # finds the min, accounting for alpha and beta
           else:
-            
             v = float("inf")
             bestAction = None
             for i in range(len(legalMoves)):
@@ -275,6 +289,43 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
+
+        def expectimaxHelper(state, depth, index):
+          # same as minimax
+          nextDepth = depth
+          nextIndex = index
+          legalMoves = state.getLegalActions(index)
+          if state.isWin() or state.isLose() or depth == self.depth or len(legalMoves) == 0:
+            return (self.evaluationFunction(state), None)
+          elif index == state.getNumAgents() - 1:
+            nextIndex = 0
+            nextDepth += 1
+          else:
+            nextIndex += 1
+
+          # max is the same as minimax
+          if index == 0:
+            max = -float("inf")
+            bestAction = None
+            for i in range(len(legalMoves)):
+              tmp = expectimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+              if tmp > max:
+                max = tmp
+                bestAction = legalMoves[i]
+            return (max, bestAction)
+
+          # picks a random state for the ghosts
+          else:
+            v = 0
+            for i in range(len(legalMoves)):
+              p = float(1/len(legalMoves))
+              v += p * expectimaxHelper(state.generateSuccessor(index, legalMoves[i]), nextDepth, nextIndex)[0]
+            chosenAction = random.choice(legalMoves)
+            return (v, chosenAction)
+
+
+        return expectimaxHelper(gameState, 0, 0)[1]
+
         util.raiseNotDefined()
 
 def betterEvaluationFunction(currentGameState):
@@ -282,9 +333,62 @@ def betterEvaluationFunction(currentGameState):
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
 
-      DESCRIPTION: <write something here so we know what you did>
+      DESCRIPTION: I started by making sure that pacman never let himself die if there were any other options.
+      Then I prioritized getting closer to food pellets and actively trying to lower the number of pellets.
+      Then I noticed that pacman wasn't trying to stay far away from the ghost, so I minimized the average distance
+      to the ghosts. Then I added the score to the total so pacman would eat scared ghosts. He never seemed to want to
+      eat the last pellet, so I tried putting in a way to force him to end the game if possible, but he still rarely ends
+      the game without being pushed by the ghost.
     """
     "*** YOUR CODE HERE ***"
+    # This was supposed to make pacman always take the last one but he still doesn't like to.
+    if currentGameState.isWin():
+      return 1000000
+
+    #getting info from the state
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newFoodCount = currentGameState.getNumFood()
+    newGhostLocs = currentGameState.getGhostPositions()
+
+    #keeps track of the distance to each ghost
+    ghostDistances = []
+    for pos in newGhostLocs:
+      dist = (abs(newPos[0] - pos[0]) + abs(newPos[1] - pos[1]))
+      ghostDistances.append(dist)
+    
+    #checks if pacman is going to die. Looking back I probably could've just used state.isLose()
+    goingToDie = False
+    for dist in ghostDistances:
+      if dist == 0:
+        goingToDie = True
+    
+    # finds average distance to a ghost
+    totalGhostDistance = sum(ghostDistances)
+    avgGhostDistance = totalGhostDistance/len(ghostDistances)
+
+    # keeps track of the locations of all the pellets
+    newFoodLocs = []
+    for i in range(newFood.width):
+      for j in range(newFood.height):
+        if newFood[i][j] == True:
+          newFoodLocs.append((i,j))
+    
+    # finds the average distance to a food pellet
+    totalFoodDistance = 0
+    avgFoodDist = 0
+    for pos in newFoodLocs:
+      dist = (abs(newPos[0] - pos[0]) + abs(newPos[1] - pos[1]))
+      totalFoodDistance += dist
+    if len(newFoodLocs) != 0:
+      avgFoodDist = totalFoodDistance / len(newFoodLocs)
+
+    # prioritizes not dying
+    if not goingToDie:
+      return 1/(avgFoodDist) - 2*newFoodCount - 0.5*avgGhostDistance + 1000*currentGameState.getScore()
+    else:
+      return -1000
+
     util.raiseNotDefined()
 
 # Abbreviation
